@@ -4,7 +4,7 @@ This project models social cooperation under the multi-agent reinforcement learn
 ![alt text](assets/image.png)
 
 ## Environment Setup
-0. Download and open Anaconda
+0. Download and open Anaconda in the folder containing this repo
 1. Create a virtual environment
 ```bash
 # Create a new virtual environment
