@@ -33,3 +33,6 @@ class CustomCallbacks(DefaultCallbacks):
         episode.custom_metrics["ncorrect2"] = episode._agent_to_last_info["agent2"][
             "ncorrect2"
         ]
+        if "ncall1" in episode._agent_to_last_info["agent1"]:  
+            episode.custom_metrics["ncall1"] = episode._agent_to_last_info["agent1"]["ncall1"]
+            episode.custom_metrics["ncall2"] = episode._agent_to_last_info["agent2"]["ncall2"]

@@ -4,6 +4,9 @@ from MultiAgentSync_fullobs_samefield_randnose_xycoords import (
     MultiAgentSync_noobs,
     MultiAgentSing_noobs,
 )
+from Coop_env_call_out import MultiAgentSync_call,MultiAgentSing_call
+from Coop_env_memory import MultiAgentSing_memory,MultiAgentSync_memory
+from Coop_env_call_to_observe import MultiAgentSync_call2,MultiAgentSing_call2
 from ray.rllib.models import ModelCatalog
 from ray.rllib.agents.ppo import PPOTorchPolicy
 from Customcallback import CustomCallbacks
@@ -11,19 +14,30 @@ from simple_rnn_v2_3_2 import AnotherTorchRNNModel
 import torch
 
 
-def get_config(args):
+def get_config(args=None):
+    args = args or type("Args", (), {})()
     env_config = {
         "height": 8,
         "width": 8,
-        "sync_limit": args.coop_window,
-        "randomize": args.randomize_loc,
-        "randomize_miss": args.randomize_miss,
+        "sync_limit": getattr(args, "coop_window",2),
+        "randomize": getattr(args, "randomize_loc",True),
+        "randomize_miss": getattr(args, "randomize_miss",False),
+        "miss_reward": getattr(args, "miss_reward", -0.5),
+        "Water1": [7, 2],
+        "Water2": [7, 6],
+        "pretrain":getattr(args, "pretrain", False)
     }
     ENV_CLASSES = {
         "MultiAgentSync_fullobs": MultiAgentSync_fullobs,
         "MultiAgentSing_fullobs": MultiAgentSing_fullobs,
         "MultiAgentSync_noobs": MultiAgentSync_noobs,
         "MultiAgentSing_noobs": MultiAgentSing_noobs,
+        "MultiAgentSync_call": MultiAgentSync_call,
+        "MultiAgentSing_call": MultiAgentSing_call,
+        "MultiAgentSync_call2": MultiAgentSync_call2,
+        "MultiAgentSing_call2": MultiAgentSing_call2,
+        "MultiAgentSing_memory":MultiAgentSing_memory,
+        "MultiAgentSync_memory":MultiAgentSync_memory
     }
 
     env_class = ENV_CLASSES.get(args.condition)
@@ -88,14 +102,14 @@ def get_config(args):
                 "max_seq_len": max_seq_len,
                 "custom_model_config": {
                     "rnn_hidden_size": 256,
-                    "l2_lambda": args.l2_curr,
-                    "l2_lambda_inp": args.l2_inp,
+                    "l2_lambda": getattr(args,"l2_curr",0.1),
+                    "l2_lambda_inp": getattr(args,"l2_inp",0),
                     "noise_std": 0,
                     "device": torch.device("cuda:0"),
                 },
             },
             "num_workers": 0,
-            "num_gpus": args.num_gpus,
+            "num_gpus": getattr(args,"num_gpus",0.3),
             "callbacks": CustomCallbacks,
         }
     )

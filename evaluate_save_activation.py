@@ -10,6 +10,9 @@ from MultiAgentSync_fullobs_samefield_randnose_xycoords import (
     MultiAgentSync_noobs,
     MultiAgentSing_noobs,
 )
+from Coop_env_call_out import MultiAgentSync_call,MultiAgentSing_call
+from Coop_env_call_to_observe import MultiAgentSync_call2,MultiAgentSing_call2
+from Coop_env_memory_old import MultiAgentSing_memory,MultiAgentSync_memory
 import numpy as np
 from scipy.io import savemat
 from collections import defaultdict
@@ -46,6 +49,12 @@ def get_args():
             "MultiAgentSing_fullobs",
             "MultiAgentSync_noobs",
             "MultiAgentSing_noobs",
+            "MultiAgentSync_call",
+            "MultiAgentSing_call",
+            "MultiAgentSync_call2",
+            "MultiAgentSing_call2",
+            "MultiAgentSing_memory",
+            "MultiAgentSync_memory"
         ],
         default="MultiAgentSync_fullobs",
         help="condition choices: non-coop/coop, fullobs/noobs",
@@ -100,6 +109,19 @@ def save_activations(agent, env, ts, n_episode, save_path):
         agent.get_policy("policy2").model,
     )
     data = defaultdict(list)
+    # get weights 
+    weights = agent.get_weights()
+    data["iw"].append(weights["policy1"]["rnn.weight_ih_l0"])
+    data["iw"].append(weights["policy2"]["rnn.weight_ih_l0"])
+    data["rw"].append(weights["policy1"]["rnn.weight_hh_l0"])
+    data["rw"].append(weights["policy2"]["rnn.weight_hh_l0"])
+    data["ow"].append(weights["policy1"]["action_branch.weight"])
+    data["ow"].append(weights["policy2"]["action_branch.weight"])
+    data["i_bias"].append(weights["policy1"]["rnn.bias_ih_l0"])
+    data["i_bias"].append(weights["policy2"]["rnn.bias_ih_l0"])
+    data["h_bias"].append(weights["policy1"]["rnn.bias_hh_l0"])
+    data["h_bias"].append(weights["policy2"]["rnn.bias_hh_l0"])
+    
 
     for _ in range(n_episode):
         model_1.activations, model_2.activations = {}, {}  # Clear activations
@@ -140,6 +162,8 @@ def save_activations(agent, env, ts, n_episode, save_path):
                 break
 
         for t in range(ts):
+            data["input1"].append(model_1.inputs["rnn"]["inp"][t][0][0].tolist())
+            data["input2"].append(model_2.inputs["rnn"]["inp"][t][0][0].tolist())
             data["activations1"].append(model_1.activations["rnn"][t][0][0].tolist())
             data["activations2"].append(model_2.activations["rnn"][t][0][0].tolist())
             data["value1"].append(model_1.activations["value_branch"][t][0][0].tolist())
@@ -186,6 +210,13 @@ if __name__ == "__main__":
         "MultiAgentSing_fullobs": MultiAgentSing_fullobs,
         "MultiAgentSync_noobs": MultiAgentSync_noobs,
         "MultiAgentSing_noobs": MultiAgentSing_noobs,
+        "MultiAgentSync_call": MultiAgentSync_call,
+        "MultiAgentSing_call": MultiAgentSing_call,
+        "MultiAgentSync_call2": MultiAgentSync_call2,
+        "MultiAgentSing_call2": MultiAgentSing_call2,
+        "MultiAgentSing_memory":MultiAgentSing_memory,
+        "MultiAgentSync_memory":MultiAgentSync_memory
+
     }
 
     env_class = ENV_CLASSES.get(args.condition)
@@ -199,4 +230,4 @@ if __name__ == "__main__":
         args.results_dir,
         f"{os.path.basename(os.path.normpath(args.checkpoint_dir))}.mat",
     )
-    save_activations(agent, env, ts=500, n_episode=10, save_path=save_path)
+    save_activations(agent, env, ts=5000, n_episode=1, save_path=save_path)

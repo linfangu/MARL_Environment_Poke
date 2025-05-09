@@ -39,6 +39,12 @@ def get_args():
             "MultiAgentSing_fullobs",
             "MultiAgentSync_noobs",
             "MultiAgentSing_noobs",
+            "MultiAgentSync_call",
+            "MultiAgentSing_call",
+            "MultiAgentSync_call2",
+            "MultiAgentSing_call2",
+            "MultiAgentSing_memory",
+            "MultiAgentSync_memory"
         ],
         default="MultiAgentSync_fullobs",
         help="condition choices: non-coop/coop, fullobs/noobs",
@@ -65,10 +71,9 @@ def get_args():
         "--coop_window", type=int, default=2, help="time window for agents cooperation"
     )
     parser.add_argument(
-        "--randomize_loc",
-        type=bool,
-        default=True,
-        help="randomize np and water after correct, generally true",
+        "--fix_loc",
+        action="store_true",  # This sets it to true if the flag is provided
+        help="Disable randomizing np and water after correct (default: False)",
     )
     parser.add_argument(
         "--randomize_miss",
@@ -81,7 +86,12 @@ def get_args():
     )
     parser.add_argument("--checkpoint_frequency", type=int, default=10)
     parser.add_argument("--resume", default=False)
-
+    parser.add_argument("--miss_reward", type=float, default=-0.5)
+    parser.add_argument(
+        "--pretrain",
+        action="store_true",  # This sets it to true if the flag is provided
+        help="provide all vision in the pretrain stage",
+    )
     args = parser.parse_args()
 
     if args.num_gpus > 0 and not torch.cuda.is_available():
@@ -91,16 +101,18 @@ def get_args():
     print("Running trails with the following arguments: ", args)
     return args
 
+    
 
 if __name__ == "__main__":
 
     args = get_args()
+    args.randomize_loc = False if args.fix_loc else True
     if not args.load_policy:
         restore_path = None
     else:
         analysis = tune.ExperimentAnalysis(os.path.abspath(args.load_policy))
         restore_path = analysis.get_best_checkpoint(
-            trial=analysis.get_best_trial(metric="episode_reward_mean"),
+            trial=analysis.get_best_trial(metric="episode_reward_mean",mode="max"),
             metric="episode_reward_mean",
             mode="max",
             return_path=True,
@@ -144,7 +156,7 @@ if __name__ == "__main__":
 
     # Find best result - the dir here can be used for the next training stage
     best_result = analysis.get_best_checkpoint(
-        trial=analysis.get_best_trial(metric="episode_reward_mean"),
+        trial=analysis.get_best_trial(metric="episode_reward_mean",mode="max"),
         metric="episode_reward_mean",
         mode="max",
     )

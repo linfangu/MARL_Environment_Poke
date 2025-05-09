@@ -9,6 +9,14 @@ if [[ "${phase}" == "coop" ]]; then
   condition=MultiAgentSync_fullobs
 elif [[ "${phase}" == "non_coop" ]]; then
   condition=MultiAgentSing_fullobs
+elif [[ "${phase}" == "call_non_coop" ]]; then
+  condition=MultiAgentSing_call
+elif [[ "${phase}" == "call_coop" ]]; then
+  condition=MultiAgentSync_call
+elif [[ "${phase}" == "memory_non_coop" ]]; then
+  condition=MultiAgentSing_memory
+elif [[ "${phase}" == "memory_coop" ]]; then
+  condition=MultiAgentSync_memory
 fi
 
 ## generate video for the best iteration 

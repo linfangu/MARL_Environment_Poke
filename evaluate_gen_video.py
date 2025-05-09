@@ -4,12 +4,15 @@ import ray
 from ray import tune
 from current_config_xy import get_config
 from ray.rllib.agents.ppo import PPOTrainer
+from Coop_env_call_out import MultiAgentSync_call,MultiAgentSing_call
 from MultiAgentSync_fullobs_samefield_randnose_xycoords import (
     MultiAgentSync_fullobs,
     MultiAgentSing_fullobs,
     MultiAgentSync_noobs,
     MultiAgentSing_noobs,
 )
+from Coop_env_call_to_observe import MultiAgentSync_call2,MultiAgentSing_call2
+from Coop_env_memory_old_ import MultiAgentSing_memory,MultiAgentSync_memory
 import imageio
 import numpy as np
 
@@ -45,6 +48,12 @@ def get_args():
             "MultiAgentSing_fullobs",
             "MultiAgentSync_noobs",
             "MultiAgentSing_noobs",
+            "MultiAgentSync_call",
+            "MultiAgentSing_call",
+            "MultiAgentSync_call2",
+            "MultiAgentSing_call2",
+            "MultiAgentSing_memory",
+            "MultiAgentSync_memory"
         ],
         default="MultiAgentSync_fullobs",
         help="condition choices: non-coop/coop, fullobs/noobs",
@@ -70,10 +79,14 @@ def get_args():
         "--coop_window", type=int, default=2, help="time window for agents cooperation"
     )
     parser.add_argument(
-        "--randomize_loc",
-        type=bool,
-        default=True,
-        help="randomize np and water after correct, generally true",
+        "--fix_loc",
+        action="store_true",  # This sets it to true if the flag is provided
+        help="Disable randomizing np and water after correct (default: False)",
+    )
+    parser.add_argument(
+        "--pretrain",
+        action="store_true",  # This sets it to true if the flag is provided
+        help="pretrain stage with all observations provided",
     )
     parser.add_argument(
         "--randomize_miss",
@@ -110,7 +123,7 @@ def find_best_iteration(ck_path):
         trial=analysis.get_best_trial("episode_reward_mean",mode="max"),
         metric="episode_reward_mean",
     )
-    # checkpoints = checkpoints[:400]
+    
     rewards_learn = list()
     for j in range(len(checkpoints)):
         rewards_learn.append(checkpoints[j][1])
@@ -120,10 +133,23 @@ def find_best_iteration(ck_path):
     print(f"best iteration {(idx+1)*10} rewards {max_number}")
     return checkpoint_dir
 
+def find_latest_iteration(ck_path):
+    ck_path = os.path.abspath(ck_path)
+    # print(f"Received path: {ck_path}")
+    analysis = tune.ExperimentAnalysis(ck_path)
+    checkpoints = analysis.get_trial_checkpoints_paths(
+        trial=analysis.get_best_trial("episode_reward_mean",mode="max"),
+        metric="episode_reward_mean",
+    )
+    checkpoint_dir = checkpoints[-1][0]
+    print(f"last iteration {(len(checkpoints))*10} rewards {checkpoints[-1][1]}")
+    return checkpoint_dir
+
 
 if __name__ == "__main__":
 
     args = get_args()
+    args.randomize_loc = False if args.fix_loc else True
     os.makedirs(args.results_dir, exist_ok=True)
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
     # Set up Ray.
@@ -137,13 +163,19 @@ if __name__ == "__main__":
         "MultiAgentSing_fullobs": MultiAgentSing_fullobs,
         "MultiAgentSync_noobs": MultiAgentSync_noobs,
         "MultiAgentSing_noobs": MultiAgentSing_noobs,
+        "MultiAgentSync_call": MultiAgentSync_call,
+        "MultiAgentSing_call": MultiAgentSing_call,
+        "MultiAgentSync_call2": MultiAgentSync_call2,
+        "MultiAgentSing_call2": MultiAgentSing_call2,
+        "MultiAgentSing_memory":MultiAgentSing_memory,
+        "MultiAgentSync_memory":MultiAgentSync_memory
     }
 
     env_class = ENV_CLASSES.get(args.condition)
     env = env_class(config=env_config)
 
     # Find best agent
-    checkpoint_dir = find_best_iteration(args.checkpoint_dir)
+    checkpoint_dir = find_latest_iteration(args.checkpoint_dir)
     agent = PPOTrainer(config=config)
     agent.restore(checkpoint_dir)
 

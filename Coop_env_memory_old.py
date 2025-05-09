@@ -6,14 +6,15 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from gym.spaces import Discrete, Dict
 
 
-### coop task ###
-class MultiAgentSync_fullobs(MultiAgentEnv):
+### coop task - nose poke will dissapear when agent is in the nose poke zone 
+class MultiAgentSync_memory(MultiAgentEnv):
     def __init__(self, config=None):
         """Config takes in width, height, and ts"""
         config = config or {}
         # Dimensions of the grid.
         self.randomize = config.get("randomize", True)
         self.randomize_miss = config.get("randomize_miss", False)
+        self.pretrain = config.get("pretrain", False)
         self.width = config.get("width", 8)
         self.height = config.get("height", 8)
         self.poke_coords1 = config.get("Poke1", [0, 2])
@@ -30,12 +31,12 @@ class MultiAgentSync_fullobs(MultiAgentEnv):
         )  # default 2 steps but record up to 5
         self.observation_space = Dict(
             {
-                "nosepoke1": Discrete(self.width / 2),
+                "nosepoke1": Discrete(self.width / 2 + 1),
                 "water1": Discrete(self.width / 2),
                 "otheragent1": Discrete(self.width / 2),
                 "self1": Discrete(self.width / 2),
                 "otherpoke1": Discrete(self.width / 2),
-                "nosepoke0": Discrete(self.height),
+                "nosepoke0":  Discrete(self.height + 1),
                 "water0": Discrete(self.height),
                 "otheragent0": Discrete(self.height),
                 "self0": Discrete(self.height),
@@ -84,6 +85,8 @@ class MultiAgentSync_fullobs(MultiAgentEnv):
         self.agent2_R = 0.0
 
         # reward availability now
+        self.agent1_NP_observed = False
+        self.agent2_NP_observed = False
         self.water_available1 = 0
         self.water_available2 = 0
         self.gotwater1 = False
@@ -319,27 +322,29 @@ class MultiAgentSync_fullobs(MultiAgentEnv):
         Returns obs space for one agent using each
         agent's current x/y-positions.
         """
+        self.agent1_NP_observed = True if (self.agent1_pos[0] > int(self.height / 2) - 2) or self.pretrain else False
+        self.agent2_NP_observed = True if (self.agent2_pos[0] > int(self.height / 2) - 2) or self.pretrain else False
 
         return {
             "agent1": {
-                "nosepoke0": self.poke_coords1[0],
+                "nosepoke0": self.poke_coords1[0]+1 if self.agent1_NP_observed else 0,
                 "water0": self.water_coords1[0],
                 "self0": self.agent1_pos[0],
                 "otheragent0": self.agent2_pos[0],
                 "otherpoke0": self.poke_coords2[0],
-                "nosepoke1": self.poke_coords1[1],
+                "nosepoke1": self.poke_coords1[1]+1 if self.agent1_NP_observed else 0,
                 "water1": self.water_coords1[1],
                 "self1": self.agent1_pos[1],
                 "otheragent1": self.agent2_pos[1] - 4,
                 "otherpoke1": self.poke_coords2[1] - 4,
             },
             "agent2": {
-                "nosepoke0": self.poke_coords2[0],
+                "nosepoke0": self.poke_coords2[0]+1 if self.agent2_NP_observed else 0,
                 "water0": self.water_coords2[0],
                 "self0": self.agent2_pos[0],
                 "otheragent0": self.agent1_pos[0],
                 "otherpoke0": self.poke_coords1[0],
-                "nosepoke1": self.poke_coords2[1] - 4,
+                "nosepoke1": self.poke_coords2[1] - 4 +1 if self.agent2_NP_observed else 0,
                 "water1": self.water_coords2[1] - 4,
                 "self1": self.agent2_pos[1] - 4,
                 "otheragent1": self.agent1_pos[1],
@@ -511,6 +516,13 @@ class MultiAgentSync_fullobs(MultiAgentEnv):
             else "!Miss!" if self.miss == 1 or self.miss_last_step == 1 else ""
         )
         draw.text((170, text_y_position - 10), text, font=font, fill="black")
+
+        # is the nosepoke visible?
+        if self.agent1_NP_observed:
+            draw.text((20, text_y_position - 15), "Visible NP", font=font, fill="black")
+        if self.agent2_NP_observed:
+            draw.text((300, text_y_position - 15),"Visible NP", font=font, fill="black")
+        
         # Move text information to the bottom
         self.draw_event_text(
             draw, self.events["agent1"], (30, text_y_position), font, "red"
@@ -558,12 +570,13 @@ class MultiAgentSync_fullobs(MultiAgentEnv):
 
 
 ### single task ###
-class MultiAgentSing_fullobs(MultiAgentEnv):
+class MultiAgentSing_memory(MultiAgentEnv):
     def __init__(self, config=None):
         """Config takes in width, height, and ts"""
         config = config or {}
         # Dimensions of the grid.
         self.randomize = config.get("randomize", True)
+        self.pretrain = config.get("pretrain", False)
         self.width = config.get("width", 8)
         self.height = config.get("height", 6)
         self.vision = config.get("Vision", [1, 2])
@@ -581,12 +594,12 @@ class MultiAgentSing_fullobs(MultiAgentEnv):
         self.movement_reward = config.get("movement_reward", -0.1)
         self.observation_space = Dict(
             {
-                "nosepoke1": Discrete(self.width / 2),
+                "nosepoke1": Discrete(self.width / 2 + 1),
                 "water1": Discrete(self.width / 2),
                 "otheragent1": Discrete(self.width / 2),
                 "self1": Discrete(self.width / 2),
                 "otherpoke1": Discrete(self.width / 2),
-                "nosepoke0":  Discrete(self.height),
+                "nosepoke0": Discrete(self.width / 2 + 1),
                 "water0": Discrete(self.height),
                 "otheragent0": Discrete(self.height),
                 "self0": Discrete(self.height),
@@ -628,6 +641,8 @@ class MultiAgentSing_fullobs(MultiAgentEnv):
                 random.randint(int(self.width / 2), self.width - 1),
             ]
         # reward availability now
+        self.agent1_NP_observed = False
+        self.agent2_NP_observed = False
         self.agent1_R = 0.0
         self.agent2_R = 0.0
         self.water_available1 = False
@@ -834,28 +849,30 @@ class MultiAgentSing_fullobs(MultiAgentEnv):
         Returns obs space for one agent using each
         agent's current x/y-positions.
         """
+        self.agent1_NP_observed = True if self.agent1_pos[0] > int(self.height / 2) - 2 else False
+        self.agent2_NP_observed = True if self.agent2_pos[0] > int(self.height / 2) - 2 else False
 
         # discrete coordinate of the locations of nose poke water port and
         return {
             "agent1": {
-                "nosepoke0": self.poke_coords1[0],
+                "nosepoke0": self.poke_coords1[0]+1 if self.agent1_NP_observed else 0,
                 "water0": self.water_coords1[0],
                 "self0": self.agent1_pos[0],
                 "otheragent0": self.agent2_pos[0],
                 "otherpoke0": self.poke_coords2[0],
-                "nosepoke1": self.poke_coords1[1],
+                "nosepoke1": self.poke_coords1[1]+1 if self.agent1_NP_observed else 0,
                 "water1": self.water_coords1[1],
                 "self1": self.agent1_pos[1],
                 "otheragent1": self.agent2_pos[1] - 4,
                 "otherpoke1": self.poke_coords2[1] - 4,
             },
             "agent2": {
-                "nosepoke0": self.poke_coords2[0],
+                "nosepoke0": self.poke_coords2[0]+1 if self.agent2_NP_observed else 0,
                 "water0": self.water_coords2[0],
                 "self0": self.agent2_pos[0],
                 "otheragent0": self.agent1_pos[0],
                 "otherpoke0": self.poke_coords1[0],
-                "nosepoke1": self.poke_coords2[1] - 4,
+                "nosepoke1": self.poke_coords2[1] - 4+1 if self.agent2_NP_observed else 0,
                 "water1": self.water_coords2[1] - 4,
                 "self1": self.agent2_pos[1] - 4,
                 "otheragent1": self.agent1_pos[1],
@@ -1021,6 +1038,13 @@ class MultiAgentSing_fullobs(MultiAgentEnv):
             f"!SyncPoke!" if self.sync_poke == 1 else "!UnsyncPoke!" if self.miss == 1 else ""
         )
         draw.text((170, text_y_position - 10), text, font=font, fill="black")
+
+        # is the nosepoke visible?
+        if self.agent1_NP_observed:
+            draw.text((20, text_y_position - 10), "Visible NP", font=font, fill="black")
+        if self.agent2_NP_observed:
+            draw.text((300, text_y_position - 10),"Visible NP", font=font, fill="black")
+        
         # Move text information to the bottom
         self.draw_event_text(
             draw, self.events["agent1"], (30, text_y_position), font, "red"
@@ -1073,6 +1097,7 @@ class MultiAgentSync_oneside(MultiAgentEnv):
         config = config or {}
         # Dimensions of the grid.
         self.randomize = config.get("randomize", True)
+        
         self.width = config.get("width", 8)
         self.height = config.get("height", 6)
         self.vision = config.get("Vision", [1, 2])
