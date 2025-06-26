@@ -10,6 +10,7 @@ from MultiAgentSync_fullobs_samefield_randnose_xycoords import (
     MultiAgentSing_fullobs,
     MultiAgentSync_noobs,
     MultiAgentSing_noobs,
+    MultiAgentSync_onesidereward,
 )
 from scipy.io import savemat, loadmat 
 import copy
@@ -47,6 +48,7 @@ def get_args():
             "MultiAgentSing_fullobs",
             "MultiAgentSync_noobs",
             "MultiAgentSing_noobs",
+            "MultiAgentSync_oneside"
         ],
         default="MultiAgentSync_fullobs",
         help="condition choices: non-coop/coop, fullobs/noobs",

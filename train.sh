@@ -17,6 +17,15 @@ elif [[ "${training_phase}" == "coop" ]]; then
   cmd="CUDA_VISIBLE_DEVICES=${GPUS} python train.py --gpu_id ${GPUS} --condition MultiAgentSync_fullobs \
     --output_dir ${output_dir} --l2_curr 0.1 --train_iter 4000 --resume ${resume}" 
 
+# coop phase, only one side get reward 
+elif [[ "${training_phase}" == "coop_1side" ]]; then
+  cmd="CUDA_VISIBLE_DEVICES=${GPUS} python train.py --gpu_id ${GPUS} --condition MultiAgentSync_oneside \
+    --output_dir ${output_dir} --l2_curr 0.1 --train_iter 4000 --resume ${resume}" 
+
+elif [[ "${training_phase}" == "single_1side" ]]; then
+  cmd="CUDA_VISIBLE_DEVICES=${GPUS} python train.py --gpu_id ${GPUS} --condition MultiAgentSing_oneside \
+    --output_dir ${output_dir} --l2_curr 0.1 --train_iter 4000 --resume ${resume}" 
+
 # callout, non-coop phase 
 elif [[ "${training_phase}" == "call_non_coop" ]]; then
   cmd="CUDA_VISIBLE_DEVICES=${GPUS} python train.py --gpu_id ${GPUS} --condition MultiAgentSing_call2 \

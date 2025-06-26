@@ -3,6 +3,8 @@ from MultiAgentSync_fullobs_samefield_randnose_xycoords import (
     MultiAgentSing_fullobs,
     MultiAgentSync_noobs,
     MultiAgentSing_noobs,
+    MultiAgentSync_onesidereward,
+    MultiAgentSing_onesidereward,
 )
 from Coop_env_call_out import MultiAgentSync_call,MultiAgentSing_call
 from Coop_env_memory import MultiAgentSing_memory,MultiAgentSync_memory
@@ -37,7 +39,9 @@ def get_config(args=None):
         "MultiAgentSync_call2": MultiAgentSync_call2,
         "MultiAgentSing_call2": MultiAgentSing_call2,
         "MultiAgentSing_memory":MultiAgentSing_memory,
-        "MultiAgentSync_memory":MultiAgentSync_memory
+        "MultiAgentSync_memory":MultiAgentSync_memory,
+        "MultiAgentSync_oneside":MultiAgentSync_onesidereward,
+        "MultiAgentSing_oneside":MultiAgentSing_onesidereward,
     }
 
     env_class = ENV_CLASSES.get(args.condition)

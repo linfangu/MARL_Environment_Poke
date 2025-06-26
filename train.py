@@ -44,7 +44,9 @@ def get_args():
             "MultiAgentSync_call2",
             "MultiAgentSing_call2",
             "MultiAgentSing_memory",
-            "MultiAgentSync_memory"
+            "MultiAgentSync_memory",
+            "MultiAgentSync_oneside",
+            "MultiAgentSing_oneside",
         ],
         default="MultiAgentSync_fullobs",
         help="condition choices: non-coop/coop, fullobs/noobs",

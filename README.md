@@ -40,7 +40,7 @@ bash train.sh call_non_coop results/call_non_coop
 ### Cooperative phase
 The cooperative training phase builds on agents trained in the non-cooperative phase. Use the following command:
 ```
-bash train.sh call_non_coop results/call_coop False results/call_non_coop
+bash train.sh call_coop results/call_coop False results/call_non_coop
 ```
 * First argument: `"call_coop"` (specifies cooperative training)
 * Second argument: Output directory for training results

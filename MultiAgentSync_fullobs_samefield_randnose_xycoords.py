@@ -35,7 +35,7 @@ class MultiAgentSync_fullobs(MultiAgentEnv):
                 "otheragent1": Discrete(self.width / 2),
                 "self1": Discrete(self.width / 2),
                 "otherpoke1": Discrete(self.width / 2),
-                "nosepoke0": Discrete(self.height),
+                "nosepoke0":  Discrete(self.height),
                 "water0": Discrete(self.height),
                 "otheragent0": Discrete(self.height),
                 "self0": Discrete(self.height),
@@ -2748,3 +2748,30 @@ class MultiAgentSing_noobs(MultiAgentEnv):
             else "!Agent Drink!" if "drink" in events else ""
         )
         draw.text(position, text, font=font, fill=color)
+
+### motivation control - one side get reward with coop poke, one side no reward 
+class MultiAgentSync_onesidereward(MultiAgentSync_fullobs):
+    def __init__(self, config=None):
+        super().__init__(config=config)
+
+    def step(self, action: dict):
+        obs, reward, done, info = super().step(action)
+
+        # Zero out reward second agent 
+        reward['agent2'] = random.uniform(-0.5,0.5)
+
+        return obs, reward, done, info
+
+
+### motivation control - one side get reward with coop poke, one side no reward 
+class MultiAgentSing_onesidereward(MultiAgentSing_fullobs):
+    def __init__(self, config=None):
+        super().__init__(config=config)
+
+    def step(self, action: dict):
+        obs, reward, done, info = super().step(action)
+
+        # Zero out reward second agent 
+        reward['agent2'] = random.uniform(-0.5,0.5)
+
+        return obs, reward, done, info
