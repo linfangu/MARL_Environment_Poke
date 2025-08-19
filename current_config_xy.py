@@ -1,18 +1,11 @@
 from MultiAgentSync_fullobs_samefield_randnose_xycoords import (
     MultiAgentSync_fullobs,
     MultiAgentSing_fullobs,
-    MultiAgentSync_noobs,
-    MultiAgentSing_noobs,
-    MultiAgentSync_onesidereward,
-    MultiAgentSing_onesidereward,
 )
-from Coop_env_call_out import MultiAgentSync_call,MultiAgentSing_call
-from Coop_env_memory import MultiAgentSing_memory,MultiAgentSync_memory
-from Coop_env_call_to_observe import MultiAgentSync_call2,MultiAgentSing_call2
 from ray.rllib.models import ModelCatalog
 from ray.rllib.agents.ppo import PPOTorchPolicy
 from Customcallback import CustomCallbacks
-from simple_rnn_v2_3_2 import AnotherTorchRNNModel
+from attention_rnn import AnotherTorchRNNModel
 import torch
 
 
@@ -32,16 +25,6 @@ def get_config(args=None):
     ENV_CLASSES = {
         "MultiAgentSync_fullobs": MultiAgentSync_fullobs,
         "MultiAgentSing_fullobs": MultiAgentSing_fullobs,
-        "MultiAgentSync_noobs": MultiAgentSync_noobs,
-        "MultiAgentSing_noobs": MultiAgentSing_noobs,
-        "MultiAgentSync_call": MultiAgentSync_call,
-        "MultiAgentSing_call": MultiAgentSing_call,
-        "MultiAgentSync_call2": MultiAgentSync_call2,
-        "MultiAgentSing_call2": MultiAgentSing_call2,
-        "MultiAgentSing_memory":MultiAgentSing_memory,
-        "MultiAgentSync_memory":MultiAgentSync_memory,
-        "MultiAgentSync_oneside":MultiAgentSync_onesidereward,
-        "MultiAgentSing_oneside":MultiAgentSing_onesidereward,
     }
 
     env_class = ENV_CLASSES.get(args.condition)
